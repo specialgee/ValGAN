@@ -1,8 +1,6 @@
-# ValGAN
+# ai.llucination
 
-List of useful resources for the custom BigGAN software development
-
-[ai.llucination](https://www.instagram.com/ai.llucination/)
+List of useful resources for the [ai.llucination](https://www.instagram.com/ai.llucination/) custom BigGAN software development
 
 [Google Doc](https://docs.google.com/document/d/1sLabG__42kjFkY8rz9cj7_dUN3sdwSZBiSHXFsaT_dc/edit?usp=sharing)
 
