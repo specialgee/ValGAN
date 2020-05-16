@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-71156606-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-71156606-1');
+  </script>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Glow: Better Reversible Generative Models</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <link rel="stylesheet" type="text/css" href="/assets/styles/all.css?v=0a533847a7" />
+  
+  <script type="text/javascript">document.documentElement.className = 'js';</script>
+  <link rel="shortcut icon" href="/favicon.png" type="image/png" />
+    <link rel="canonical" href="https://openai.com/blog/glow/" />
+    <meta name="referrer" content="no-referrer-when-downgrade" />
+    
+    <meta property="og:site_name" content="OpenAI" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Glow: Better Reversible Generative Models" />
+    <meta property="og:description" content="We introduce Glow, a reversible generative model which uses invertible 1x1 convolutions. It extends previous work on reversible generative models and simplifies the architecture. Our model can generate realistic high resolution images, supports efficient sampling, and discovers features that can be used to manipulate attributes of data. We&#x27;re releasing code" />
+    <meta property="og:url" content="https://openai.com/blog/glow/" />
+    <meta property="og:image" content="https://openai.com/content/images/2018/07/transforms2.png" />
+    <meta property="article:published_time" content="2018-07-09T16:00:57.000Z" />
+    <meta property="article:modified_time" content="2019-03-07T05:37:57.000Z" />
+    
+    <meta property="article:publisher" content="https://www.facebook.com/openai.research" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Glow: Better Reversible Generative Models" />
+    <meta name="twitter:description" content="We introduce Glow, a reversible generative model which uses invertible 1x1 convolutions. It extends previous work on reversible generative models and simplifies the architecture. Our model can generate realistic high resolution images, supports efficient sampling, and discovers features that can be used to manipulate attributes of data. We&#x27;re releasing code" />
+    <meta name="twitter:url" content="https://openai.com/blog/glow/" />
+    <meta name="twitter:image" content="https://openai.com/content/images/2018/07/middle-1.png" />
+    <meta name="twitter:label1" content="Written by" />
+    <meta name="twitter:data1" content="Prafulla Dhariwal" />
+    <meta name="twitter:label2" content="Filed under" />
+    <meta name="twitter:data2" content="" />
+    <meta name="twitter:site" content="@openai" />
+    <meta property="og:image:width" content="1024" />
+    <meta property="og:image:height" content="535" />
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "OpenAI",
+        "url": "https://openai.com/",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "https://openai.com/content/images/2019/05/openai-avatar.png",
+            "width": 60,
+            "height": 60
+        }
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Prafulla Dhariwal",
+        "url": "https://openai.com/blog/authors/prafulla/",
+        "sameAs": []
+    },
+    "headline": "Glow: Better Reversible Generative Models",
+    "url": "https://openai.com/blog/glow/",
+    "datePublished": "2018-07-09T16:00:57.000Z",
+    "dateModified": "2019-03-07T05:37:57.000Z",
+    "description": "We introduce Glow, a reversible generative model which uses invertible 1x1\nconvolutions. It extends previous [https://arxiv.org/abs/1410.8516] work\n[https://arxiv.org/abs/1605.08803] on reversible generative models and\nsimplifies the architecture. Our model can generate realistic high resolution\nimages, supports efficient sampling, and discovers features that can be used to\nmanipulate attributes of data. We&#x27;re releasing code for the model and an online\nvisualization tool so people can explore an",
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://openai.com/"
+    }
+}
+    </script>
+
+    <script defer src="/public/members.min.js?v=0a533847a7"></script>
+    <meta name="generator" content="Ghost 3.15" />
+    <link rel="alternate" type="application/rss+xml" title="OpenAI" href="" />
+  <link rel="shortcut icon" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+</head>
+<body>
+  <main>
+    
+<article class="post" id="post-glow">
+  
+  <header
+  class="post-header"
+  >
+  <nav class="nav js-nav">
+  <div class="container">
+    <div class="nav-row row d-flex justify-content-between align-items-center">
+      <div class="col-2">
+        <a href="/" class="nav-symbol fade"><svg id="openai-symbol" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 51 51"><path d="M47.21,20.92a12.65,12.65,0,0,0-1.09-10.38A12.78,12.78,0,0,0,32.36,4.41,12.82,12.82,0,0,0,10.64,9a12.65,12.65,0,0,0-8.45,6.13,12.78,12.78,0,0,0,1.57,15A12.64,12.64,0,0,0,4.84,40.51a12.79,12.79,0,0,0,13.77,6.13,12.65,12.65,0,0,0,9.53,4.25A12.8,12.8,0,0,0,40.34,42a12.66,12.66,0,0,0,8.45-6.13A12.8,12.8,0,0,0,47.21,20.92ZM28.14,47.57a9.46,9.46,0,0,1-6.08-2.2l.3-.17,10.1-5.83a1.68,1.68,0,0,0,.83-1.44V23.69l4.27,2.47a.15.15,0,0,1,.08.11v11.8A9.52,9.52,0,0,1,28.14,47.57ZM7.72,38.85a9.45,9.45,0,0,1-1.13-6.37l.3.18L17,38.49a1.63,1.63,0,0,0,1.65,0L31,31.37V36.3a.17.17,0,0,1-.07.13L20.7,42.33A9.51,9.51,0,0,1,7.72,38.85Zm-2.66-22a9.48,9.48,0,0,1,5-4.17v12a1.62,1.62,0,0,0,.82,1.43L23.17,33.2,18.9,35.67a.16.16,0,0,1-.15,0L8.54,29.78A9.52,9.52,0,0,1,5.06,16.8ZM40.14,25,27.81,17.84l4.26-2.46a.16.16,0,0,1,.15,0l10.21,5.9A9.5,9.5,0,0,1,41,38.41v-12A1.67,1.67,0,0,0,40.14,25Zm4.25-6.39-.3-.18L34,12.55a1.64,1.64,0,0,0-1.66,0L20,19.67V14.74a.14.14,0,0,1,.06-.13L30.27,8.72a9.51,9.51,0,0,1,14.12,9.85ZM17.67,27.35,13.4,24.89a.17.17,0,0,1-.08-.12V13a9.51,9.51,0,0,1,15.59-7.3l-.3.17-10.1,5.83a1.68,1.68,0,0,0-.83,1.44Zm2.32-5,5.5-3.17L31,22.35v6.34l-5.49,3.17L20,28.69Z"/></svg></a>
+      </div>
+      <div class="col" hidden>
+        <a href="/" class="nav-wordmark fade"><svg id="openai-wordmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 180"><path d="M410.22,41.09c-13.75,0-23.57,4.7-28.39,13.59l-2.59,4.79V43.41h-22.4v97.85H380.4V83.05c0-13.91,7.55-21.89,20.73-21.89,12.56,0,19.76,7.76,19.76,21.31v58.79h23.56v-63C444.45,55,431.65,41.09,410.22,41.09ZM296,41.09c-27.79,0-45.06,17.33-45.06,45.25v13.74c0,26.83,17.42,43.51,45.45,43.51,18.74,0,31.88-6.88,40.15-21l-14.61-8.39c-6.11,8.15-15.86,13.19-25.54,13.19-14.19,0-22.67-8.76-22.67-23.44v-3.89h65.79V83.82c0-26-17.08-42.73-43.51-42.73Zm22.08,43.14H273.72V81.89c0-16.12,7.91-25,22.28-25,13.83,0,22.08,8.76,22.08,23.44ZM678.32,27.3V8.58H596.87V27.3h28.56v95.25H596.87v18.71h81.45V122.55H649.76V27.3ZM60.67,5.87c-36.39,0-59,22.68-59,59.18V84.79c0,36.51,22.6,59.18,59,59.18s59-22.67,59-59.18V65.05C119.66,28.55,97.05,5.87,60.67,5.87ZM95.33,86.14c0,24.24-12.63,38.15-34.66,38.15S26,110.38,26,86.14V63.7c0-24.24,12.63-38.15,34.66-38.15S95.32,39.46,95.32,63.7Zm98.31-45c-12.36,0-23.07,5.11-28.64,13.69l-2.54,3.9V43.41H140.07V174.93h23.55V127.3l2.53,3.74c5.3,7.85,15.65,12.55,27.68,12.55,20.31,0,40.8-13.28,40.8-42.93V84c0-21.35-12.63-42.91-41-42.91Zm17.44,58.4c0,15.77-9.2,25.57-24,25.57-13.8,0-23.44-10.35-23.44-25.18V85.23c0-15.06,9.72-25.57,23.63-25.57,14.7,0,23.83,9.8,23.83,25.57ZM509.55,8.63,462,141.26h23.9l9.1-28.44h54.65l.09.28,9,28.16h23.93L535.08,8.58Zm-8.67,85.52L522.32,27l21.23,67.07Z"/></svg></a>
+      </div>
+      <div class="col-auto">
+        <ul class="nav-items d-none d-desktop-flex justify-content-end small-caps">
+                        
+            <li class="nav-item">
+              <a class="fade" href="/about/">About</a>
+            </li>
+            
+            <li class="nav-item">
+              <a class="fade" href="/progress/">Progress</a>
+            </li>
+            
+            <li class="nav-item">
+              <a class="fade" href="/resources/">Resources</a>
+            </li>
+            
+            <li class="nav-item">
+              <a class="fade" href="/blog/">Blog</a>
+            </li>
+        </ul>
+        <button class="nav-toggle nav-toggle--open js-mobile-nav-open fade d-desktop-none"><svg id="mobile-nav-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22,13H2a1,1,0,0,1,0-2H22a1,1,0,0,1,0,2Z"/><path d="M22,6H2A1,1,0,0,1,2,4H22a1,1,0,0,1,0,2Z"/><path d="M22,20H2a1,1,0,0,1,0-2H22a1,1,0,0,1,0,2Z"/></svg></button>
+      </div>
+    </div>
+  </div>
+</nav>
+<nav class="mobile-nav js-mobile-nav text-left">
+  <div class="container">
+    <div class="nav-row row d-flex justify-content-between align-items-center">
+      <div class="col-2">
+      </div>
+      <div class="col-auto">
+        <button class="nav-toggle nav-toggle--close js-mobile-nav-close"><svg id="mobile-nav-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path id="Glyph" d="M19.77,5.63,13.41,12l6.36,6.37a1,1,0,0,1-1.41,1.41L12,13.41,5.63,19.77a1,1,0,0,1-1.44-1.39l0,0L10.58,12,4.21,5.63a1,1,0,0,1,0-1.42,1,1,0,0,1,1.41,0l0,0L12,10.58l6.37-6.37a1,1,0,0,1,1.41,0A1,1,0,0,1,19.77,5.63Z"/></svg></button>
+      </div>
+    </div>
+  </div>
+  <div class="container font-large">
+    <ul class="mt-0.25 small-caps">
+                
+          <li>
+            <a class="fade d-block py-0.75" href="/about/">About</a>
+          </li>
+          <hr class="bg-fg">
+        
+          <li>
+            <a class="fade d-block py-0.75" href="/progress/">Progress</a>
+          </li>
+          <hr class="bg-fg">
+        
+          <li>
+            <a class="fade d-block py-0.75" href="/resources/">Resources</a>
+          </li>
+          <hr class="bg-fg">
+        
+          <li>
+            <a class="fade d-block py-0.75" href="/blog/">Blog</a>
+          </li>
+          <hr class="bg-fg">
+      <li>
+        <a class="fade d-block py-0.75" href="/jobs/">Jobs</a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+
+  
+  <div class="container">
+    <hr class="mb-1 js-nav-fold">
+    <div class="row">
+      <div class="col-12 col-md-9 col-lg-8 col-xl-6 offset-xl-3 mt-1 mb-0.5">
+          <div class="xsmall-caps color-fg-40 mb-0.125">
+    <time datetime="2018-07-09">July 9, 2018</time> • 
+    <span class="reading-time inline-block">6 minute read</span>
+  </div>
+          <h1 class="balance-text mb-0.5">Glow: Better Reversible Generative Models</h1>
+          <div class="post-excerpt medium-copy mb-0.5 color-fg-80 js-excerpt-container js-widow">
+  </div>
+              </div>
+    </div>
+  </div>
+  
+</header>
+
+  <section class="container">
+  <div class="row">
+    <section class="content">
+      <!--kg-card-begin: markdown--><div class="js-excerpt">
+<p>We introduce <em>Glow</em>, a reversible generative model which uses invertible 1x1 convolutions. It extends <a href="https://arxiv.org/abs/1410.8516">previous</a> <a href="https://arxiv.org/abs/1605.08803">work</a> on reversible generative models and simplifies the architecture. Our model can generate realistic high resolution images, supports efficient sampling, and discovers features that can be used to manipulate attributes of data. We're releasing code for the model and an online visualization tool so people can explore and build on these results.</p>
+</div>
+<section class="btns">
+  <a href="https://arxiv.org/abs/1807.03039" class="btn btn-padded icon-paper">Read Paper</a>
+</section>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
+</script>
+<script src="https://cdn.rangetouch.com/1.0.5/rangetouch.js"></script>
+<script src="https://d4mucfpksywv.cloudfront.net/research-covers/glow/demo/load-image.all.min.js"></script>
+<script src="https://d4mucfpksywv.cloudfront.net/research-covers/glow/demo/html2canvas.min.js"></script>
+<script src="https://d4mucfpksywv.cloudfront.net/research-covers/glow/demo/canvas2image.js"></script>
+<link href="https://d4mucfpksywv.cloudfront.net/research-covers/glow/demo/glowDemo.css" rel="stylesheet">
+<script src="https://d4mucfpksywv.cloudfront.net/research-covers/glow/demo/glowDemo.js"></script>
+<figure class="GlowDemo_Container">
+</figure>
+<div class="caption">An interactive demo of our model to manipulate attributes of your face, and blend with other faces</div>
+<h2 id="motivation">Motivation</h2>
+<style type="text/css">
+video {  
+   width:100%; 
+   height:auto; 
+}
+</style>
+<video autoplay muted playsinline width="100%" loop>
+  <source src="https://d4mucfpksywv.cloudfront.net/research-covers/glow/videos/both_loop_new.mp4" type="video/mp4">
+Your browser does not support video
+</video>
+<div class="caption">Manipulating attributes of images of researchers Prafulla Dhariwal and Durk Kingma. The model isn't given attribute labels at training time, yet it learns a latent space where certain directions correspond to changes in attributes like beard density, age, hair color, and so on.</div>
+<p>Generative modeling is about observing data, like a set of pictures of faces, then learning a model of how this data was generated. Learning to approximate the data-generating process requires learning <em>all structure</em> present in the data, and successful models should be able to synthesize outputs that look similar to the data. Accurate generative models have broad applications, including <a href="https://arxiv.org/abs/1609.03499">speech synthesis</a>, <a href="https://blog.openai.com/language-unsupervised/">text analysis and synthesis</a>, <a href="https://arxiv.org/abs/1406.5298">semi-supervised learning</a> and <a href="https://arxiv.org/abs/1803.10122">model-based control</a>. The technique we propose can be applied to those problems as well.</p>
+<!--Covered by samples video ![composite](/content/images/2018/06/composite.png)
+*Random samples from our model of faces.* -->
+<p>Glow is a type of reversible generative model, also called <em>flow-based generative model</em>, and is an extension of the <a href="https://arxiv.org/abs/1410.8516">NICE</a> and <a href="https://arxiv.org/abs/1605.08803">RealNVP</a> techniques. Flow-based generative models have so far gained little attention in the research community compared to <a href="https://en.wikipedia.org/wiki/Generative_adversarial_network">GANs</a> and <a href="https://arxiv.org/abs/1312.6114">VAEs</a>.</p>
+<p>Some of the merits of flow-based generative models include:</p>
+<ul>
+<li>Exact latent-variable inference and log-likelihood evaluation. In VAEs, one is able to infer only approximately the value of the latent variables that correspond to a datapoint. GAN's have no encoder at all to infer the latents. In reversible generative models, this can be done exactly without approximation. Not only does this lead to accurate inference, it also enables optimization of the exact log-likelihood of the data, instead of a lower bound of it.</li>
+<li>Efficient inference and efficient synthesis. Autoregressive models, such the <a href="https://arxiv.org/abs/1606.05328">PixelCNN</a>, are also reversible, however synthesis from such models is difficult to parallelize, and typically inefficient on parallel hardware. Flow-based generative models like Glow (and RealNVP) are efficient to parallelize for both inference and synthesis.</li>
+<li>Useful latent space for downstream tasks. The hidden layers of autoregressive models have unknown marginal distributions, making it much more difficult to perform valid manipulation of data. In GANs, datapoints can usually not be directly represented in a latent space, as they have no encoder and might not have full support over the data distribution. This is not the case for reversible generative models and VAEs, which allow for various applications such as interpolations between datapoints and meaningful modifications of existing datapoints.</li>
+<li>Significant potential for memory savings. Computing gradients in reversible neural networks requires an amount of memory that is constant instead of linear in their depth, as explained in the <a href="https://arxiv.org/abs/1707.04585">RevNet paper</a>.</li>
+</ul>
+<!--reversible generative models, due to their different objective function, they do typically do not have the ability to encode  
+A difference with GANs is that  is able to encode real images and 
+optimized by simply maximizing likelihood, i.e. the probability of the data. An advantage of maximizing likelihood is that the resulting model has full support over the data, which is [typically not the case with for GAN objectives](https://arxiv.org/abs/1705.08868). Full support over the data is important if one is interested in encoding datapoints (such as images) and performing operations on them. With GANs there is typically no natural way not be smoothly interpolate between images, for example. Also, modifying properties of real images, such as making a person smile, would not be with GANs unless the model is explicitely trained to do so.-->
+<h2 id="results">Results</h2>
+<p>Using our techniques we achieve significant improvements on standard benchmarks compared to RealNVP, the previous best published result with flow-based generative models.</p>
+<table class="d-table">
+  <thead>
+    <tr> 
+        <th> Dataset </th><th> RealNVP </th><th> Glow </th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+    <tr>
+        <td> CIFAR-10 </td><td> 3.49 </td><td><strong>3.35</strong></td>
+    </tr>
+    <tr>
+        <td> Imagenet 32x32 </td><td> 4.28 </td><td><strong>4.09</strong></td>
+    </tr>
+    <tr>
+        <td> Imagenet 64x64 </td><td> 3.98 </td><td><strong>3.81</strong></td>
+    </tr>
+    <tr>
+        <td> LSUN (bedroom) </td><td> 2.72 </td><td><strong>2.38</strong></td>
+    </tr>
+    <tr>
+        <td> LSUN (tower) </td><td> 2.81 </td><td><strong>2.46</strong></td>
+    </tr>
+    <tr>
+        <td> LSUN (church outdoor) </td><td> 3.08 </td><td><strong>2.67</strong></td>
+    </tr>
+</table>
+<div class="caption">
+<p>Quantitative performance in terms of bits per dimension evaluated on the test set of various datasets, for the <a href="https://arxiv.org/abs/1605.08803">RealNVP model</a> versus our Glow model.*</p>
+</div>
+<style type="text/css">
+video {  
+   width:100%; 
+   height:auto; 
+}
+</style>
+<video autoplay muted playsinline width="100%" loop>
+  <source src="https://d4mucfpksywv.cloudfront.net/research-covers/glow/videos/samples.mp4" type="video/mp4">
+Your browser does not support video
+</video> 
+<div class="caption">Samples from our model after training on a dataset of 30,000 high resolution faces</div>
+<p>Glow models can generate realistic-looking high-resolution images, and can do so efficiently. Our model takes about 130ms to generate a 256 x 256 sample on a NVIDIA 1080 Ti GPU. Like <a href="https://arxiv.org/abs/1802.05751">previous</a> work, we found<br>
+that sampling from a reduced-temperature model often results in higher-quality samples. The samples above were obtained by scaling the standard deviation of the latents by a temperature of 0.7.</p>
+<h3 id="interpolationinlatentspace">Interpolation in latent space</h3>
+<p>We can also interpolate between arbitrary faces, by using the encoder to encode the two images and sample from intermediate points. Note that the inputs are arbitrary faces and not samples from the model, thus providing evidence that the model has support over the full target distribution.</p>
+<style type="text/css">
+video {  
+   width:100%; 
+   height:auto; 
+}
+</style>
+<video autoplay muted playsinline width="100%" loop>
+  <source src="https://d4mucfpksywv.cloudfront.net/research-covers/glow/videos/prafulla_people_loop.mp4" type="video/mp4">
+Your browser does not support video
+</video>
+<div class="caption">Interpolating between Prafulla's face and celebrity faces.</div>
+<h3 id="manipulationinlatentspace">Manipulation in latent space</h3>
+<p>We can train a flow-based model, without labels, and then use the learned latent reprentation for downstream tasks like manipulating attributes of your input. These semantic attributes could be the color of hair in a face, the style of an image, the pitch of a musical sound, or the emotion of a text sentence. Since flow-based models have a perfect encoder, you can encode inputs and compute the average latent vector of inputs with and without the attribute. The vector direction between the two can then be used to manipulate an arbitrary input towards that attribute.</p>
+<p>The above process requires a relatively small amount of labeled data, and can be done after the model has been trained (no labels are needed while training). <a href="https://arxiv.org/abs/1606.03657">Previous</a> <a href="https://arxiv.org/abs/1711.05415">work</a> using GAN's requires training an encoder separately. <a href="https://arxiv.org/abs/1804.03599">Approaches</a> <a href="https://arxiv.org/abs/1803.05428">using</a> VAE's only guarantee that the decoder and encoder are compatible for in-distribution data. Other approaches involve directly learning the function representing the transformation, like <a href="https://arxiv.org/abs/1703.10593">Cycle-GAN's</a>, however they require retraining for every transformation.</p>
+<pre><code class="language-python"># Train flow model on large, unlabelled dataset X
+m = train(X_unlabelled)
+
+# Split labelled dataset based on attribute, say blonde hair
+X_positive, X_negative = split(X_labelled)
+
+# Obtain average encodings of positive and negative inputs
+z_positive = average([m.encode(x) for x in X_positive])
+z_negative = average([m.encode(x) for x in X_negative])
+
+# Get manipulation vector by taking difference
+z_manipulate = z_positive - z_negative
+
+# Manipulate new x_input along z_manipulate, by a scalar alpha \in [-1,1]
+z_input = m.encode(x_input)
+x_manipulated = m.decode(z_input + alpha * z_manipulate)
+</code></pre>
+<div class="caption">Simple code snippet for using a flow-based model for manipulating attributes</div>
+<h2 id="contribution">Contribution</h2>
+<p>Our main contribution and also our departure from the earlier RealNVP work is the addition of a reversible 1x1 convolution, as well as removing other components, simplifying the architecture overall.</p>
+<p>The RealNVP architecture consists of sequences of two types of layers: layers with checkboard masking, and layers with channel-wise masking. We remove the layers with checkerboard masking, simplifying the architecture. The layers with channel-wise masking perform the equivalent of a repetition of the following steps:</p>
+<ol>
+<li>Permute the inputs by reversing their ordering across the channel dimension.</li>
+<li>Split the input into two parts, A and B, down the middle of the feature dimension.</li>
+<li>Feed A into a shallow convolutional neural network. Linearly transform B according to the output of the neural network.</li>
+<li>Concatenate A and B.</li>
+</ol>
+<p>By chaining these layers, A updates B, then B updates A, then A updates B, etc. This bipartite flow of information is clearly quite rigid. We found that model performance improves by changing the reverse permutation of step (1) to a (fixed) <em>shuffling</em> permutation.</p>
+<p>Taking this a step further, we can also <em>learn</em> the optimal permutation. Learning a permutation matrix is a discrete optimization that is not amendable to gradient ascent. But because the permutation operation is just a special case of a linear transformation with a square matrix, we can make this work with convolutional neural networks, as permuting the channels is equivalent to a 1x1 convolution operation with an equal number of input and output channels. So we replace the fixed permutation with learned 1x1 convolution operations. The weights of the 1x1 convolution are initialized as a random rotation matrix. As we show in the figure below, this operation leads to significant modeling improvements. We've also shown that the computations involved in optimizing the objective function can be done efficiently through a LU decomposition of the weights.</p>
+<!-- ![output](/content/images/2018/06/output.png) -->
+<p><img src="https://openai.com/content/images/2018/07/affine-coupling@2x-2.png" alt="affine-coupling@2x-2"></p>
+<div class="caption">Our main contribution, invertible 1x1 convolutions, leads to significant modeling improvements.</div>
+<p>In addition, we remove batch normalization and replace it with an activation normalization layer. This layer simply shifts and scales the activations, with <a href="https://arxiv.org/abs/1602.07868">data-dependent initialization</a> that normalizes the activations given an initial minibatch of data. This allows scaling down the minibatch size to 1 (for large images) and scaling up the size of the model.</p>
+<h2 id="scale">Scale</h2>
+<p>Our architecture combined with various optimizations, such as <a href="https://github.com/openai/gradient-checkpointing">gradient checkpointing</a>, allows us to train flow-based generative models on a larger scale than usual. We used <a href="https://github.com/uber/horovod">Horovod</a> to easily train our model on a cluster of multiple machines; the model used in our demo was trained on 5 machines with each 8 GPUs. Using this setup we train models with over a hundred million parameters.</p>
+<h2 id="directionsforresearch">Directions for research</h2>
+<p>Our work suggests that it's possible to train flow-based models to generate realistic high-resolution images, and learned latent representations that can be easily used for downstream tasks like manipulation of data. We suggest a few directions for future work:</p>
+<ol>
+<li><strong>Be competitive with other model classes on likelihood.</strong> Autoregressive models and VAE's perform better than flow-based models on log-likelihood, however they have the drawbacks of inefficient sampling and inexact inference respectively. One can combine flow-based models, VAEs and autoregresive models to trade off their strengths; this would be an interesting direction for future work.</li>
+<li><strong>Improve architecture to be more compute and parameter efficient.</strong> To generate realistic high-resolution images, the face generation model uses ~200M parameters and ~600 convolution layers, which makes it expensive to train. Models with smaller depth performed worse on learning long-range dependencies. Using <a href="https://arxiv.org/abs/1802.05751">self</a> <a href="https://arxiv.org/abs/1805.08318">attention</a> architectures, or performing <a href="https://arxiv.org/abs/1710.10196">progressive</a> training to scale to high resolutions could make it computationally cheaper to train glow models.</li>
+</ol>
+<p>Finally, if you’d like use Glow in your research, we encourage you to check out <a href="https://arxiv.org/abs/1807.03039">our paper</a> for more details, or look at our code on this <a href="https://github.com/openai/glow">Github repo</a>.</p>
+<!--
+#Things we learned
+Since our model consists of a sequence of convolutions, we need sufficient depth in order to capture long-range dependencies. With insufficient depth, interesting failures emerge. See the left half of the figure below for samples from a model with insufficient long-range dependency modeling. 
+
+![deep-vs-nondeep](/content/images/2018/06/deep-vs-nondeep.png)
+-->
+<footer class="post-footer js-post-footer">
+  <div>
+    <hr>
+    <div class="row">
+      <div class="col">Acknowledgments</div>
+      <div class="col">
+        Special thanks to Nicholas Benson for helping us build the demo.
+      </div>
+    </div>
+  </div>
+</footer>
+<!--kg-card-end: markdown-->
+    </section>
+  </div>
+</section>
+  <footer class="post-footer post-footer--authors container js-post-footer-authors">
+  <div data-order="0">
+    <hr>
+    <div class="row" id="authors">
+      <div class="col">Authors</div>
+      <div class="col js-post-footer-authors-list ">
+        <span class="post-author"><a class="fade" href="/blog/authors/prafulla/">Prafulla Dhariwal</a></span><span class="post-author"><a class="fade" href="/blog/authors/diederik/">Durk Kingma</a></span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+</article>
+  
+
+  </main>
+  <footer>
+  <div class="container mt-2.5 pb-0.5 pb-lg-1">
+    <hr>
+    <nav class="py-0.5 color-fg-50 small-copy">
+      <div class="row">
+
+        <div class="col-12 col-md mb-0.5 col-lg mb-lg-0">
+          <ul class="list-inline">
+            <li class="d-block d-sm-inline mb-0.125 mb-sm-0"><a class="fade d-block d-sm-inline" href="/about/">About</a></li>
+            <li class="d-block d-sm-inline mb-0.125 mb-sm-0"><a class="fade d-block d-sm-inline" href="/progress/">Progress</a></li>
+            <li class="d-block d-sm-inline mb-0.125 mb-sm-0"><a class="fade d-block d-sm-inline" href="/resources/">Resources</a></li>
+            <li class="d-block d-sm-inline mb-0.125 mb-sm-0"><a class="fade d-block d-sm-inline" href="/blog/">Blog</a></li>
+            <li class="d-block d-sm-inline mb-0.125 mb-sm-0"><a class="fade d-block d-sm-inline" href="/charter/">Charter</a></li>
+            <li class="d-block d-sm-inline mb-0.125 mb-sm-0"><a class="fade d-block d-sm-inline" href="/jobs/">Jobs</a></li>
+            <li class="d-block d-sm-inline mb-0.125 mb-sm-0"><a class="fade d-block d-sm-inline" href="/press/">Press</a></li>
+          </ul>
+        </div>
+
+        <div class="col-12 mt-n0.2 mt-sm-0 col-sm-auto order-sm-last col-lg-2 order-lg-first">
+          <div class="d-flex align-items-center">
+            <a class="fade color-fg-40 mr-5/12 footer-icon footer-icon--twitter" href="https://twitter.com/openai"><svg id="twitter" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 18"><path d="M7.86,17.93a12.84,12.84,0,0,0,13-12.63V5.11c0-.19,0-.39,0-.58A9.52,9.52,0,0,0,23.15,2.2a9.58,9.58,0,0,1-2.63.71,4.59,4.59,0,0,0,2-2.5,9.25,9.25,0,0,1-2.91,1.1A4.63,4.63,0,0,0,16.29.08a4.55,4.55,0,0,0-4.58,4.5,4.46,4.46,0,0,0,.12,1A13.05,13.05,0,0,1,2.4.91a4.46,4.46,0,0,0,1.42,6,4.52,4.52,0,0,1-2.07-.57v.06a4.53,4.53,0,0,0,3.67,4.42A5,5,0,0,1,4.21,11a4.12,4.12,0,0,1-.86-.09A4.55,4.55,0,0,0,7.62,14,9.34,9.34,0,0,1,.85,15.9a13.17,13.17,0,0,0,7,2"/></svg></a>
+            <a class="fade color-fg-40 footer-icon footer-icon--facebook" href="https://www.facebook.com/openai.research"><svg id="facebook" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M20,10A10,10,0,1,0,8.44,19.88v-7H5.9V10H8.44V7.8a3.52,3.52,0,0,1,3.77-3.89,15.72,15.72,0,0,1,2.24.19V6.56H13.19a1.45,1.45,0,0,0-1.63,1.56V10h2.78l-.45,2.89H11.56v7A10,10,0,0,0,20,10Z"/></svg></a>
+          </div>
+        </div>
+
+
+      </div>
+    </nav>
+  </div>
+</footer>
+  <script type="text/javascript" src="/assets/scripts/main.js?v=0a533847a7"></script>
+  
+  
+  
+</body>
+</html>
