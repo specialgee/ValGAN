@@ -9,10 +9,9 @@ List of useful resources for the [ai.llucination](https://www.instagram.com/ai.l
 ## Machine Learning
 
 -   [Machine Learning Glossary](https://developers.google.com/machine-learning/glossary)
-
 -   [ML Cheat Sheet](https://ml-cheatsheet.readthedocs.io/en/latest/index.html)
-
 -   [Understanding Latent Space in Machine Learning](https://towardsdatascience.com/understanding-latent-space-in-machine-learning-de5a7c687d8d)
+-   [Tuning Machine Learning Hyperparameters](https://heartbeat.fritz.ai/tuning-machine-learning-hyperparameters-40265a35c9b8)
 
 ## Neural Network
 
@@ -28,7 +27,9 @@ List of useful resources for the [ai.llucination](https://www.instagram.com/ai.l
 
 - [What are Generative Adversarial Networks (GANs) and how do they work?](https://www.youtube.com/watch?v=-Upj_VhjTBs)
 
+- [Introduction to Generative Adversarial Networks (GANs): Types, and Applications, and Implementation](https://heartbeat.fritz.ai/introduction-to-generative-adversarial-networks-gans-35ef44f21193)
 
+- [Glow: Better Reversible Generative Models](https://openai.com/blog/glow/)
 
 ## BigGAN
 
@@ -37,7 +38,6 @@ List of useful resources for the [ai.llucination](https://www.instagram.com/ai.l
 -   [BigGAN-PyTorch](https://github.com/ajbrock/BigGAN-PyTorch)
 -   [BigGAN + BiGAN = BigBiGAN | DeepMind Model Excels in Unsupervised Representation Learning and Image Generation](https://medium.com/syncedreview/biggan-bigan-bigbigan-deepmind-model-excels-in-unsupervised-representation-learning-and-36afb1c881c5)
 -   [BigBiGAN Github](https://github.com/SreeHarshaNelaturu/BigBiGAN)
--   [Glow: Better Reversible Generative Models](https://openai.com/blog/glow/)
 
 
 
