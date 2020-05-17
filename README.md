@@ -21,9 +21,7 @@ List of useful resources for the [ai.llucination](https://www.instagram.com/ai.l
 
 ## GAN
 
--   [Generative Adversarial Networks (GANs) - Computerphile
-
-    ](https://youtu.be/Sw9r8CL98N0)
+-   [Generative Adversarial Networks (GANs) - Computerphile](https://youtu.be/Sw9r8CL98N0)
 
 - [What are Generative Adversarial Networks (GANs) and how do they work?](https://www.youtube.com/watch?v=-Upj_VhjTBs)
 
